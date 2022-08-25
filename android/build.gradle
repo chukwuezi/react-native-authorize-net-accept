@@ -19,8 +19,9 @@ def safeExtGet(prop, fallback) {
     rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
 }
 
-apply plugin: 'com.android.library'
-apply plugin: 'maven'
+  apply plugin: 'maven-publish'
+  apply plugin: 'com.android.library'
+
 
 buildscript {
     // The Android Gradle plugin is only required when opening the android folder stand-alone.
@@ -37,9 +38,9 @@ buildscript {
         }
     }
 }
+  apply plugin: 'maven-publish'
+  apply plugin: 'com.android.library'
 
-apply plugin: 'com.android.library'
-apply plugin: 'maven'
 
 android {
     compileSdkVersion safeExtGet('compileSdkVersion', DEFAULT_COMPILE_SDK_VERSION)
@@ -108,9 +109,11 @@ afterEvaluate { project ->
     // some Gradle build hooks ref:
     // https://www.oreilly.com/library/view/gradle-beyond-the/9781449373801/ch03.html
     task androidJavadoc(type: Javadoc) {
+        project.getConfigurations().api.setCanBeResolved(true)
+
         source = android.sourceSets.main.java.srcDirs
         classpath += files(android.bootClasspath)
-        classpath += files(project.getConfigurations().getByName('compile').asList())
+        classpath += files(project.getConfigurations().getByName('api').asList())
         include '**/*.java'
     }
 
@@ -139,12 +142,19 @@ afterEvaluate { project ->
         archives androidJavadocJar
     }
 
-    task installArchives(type: Upload) {
+    /* task installArchives(type: Upload) {
         configuration = configurations.archives
         repositories.mavenDeployer {
             // Deploy to react-native-event-bridge/maven, ready to publish to npm
             repository url: "file://${projectDir}/../android/maven"
             configureReactNativePom pom
         }
+    } */
+    publishing {
+    repositories {
+        maven {
+            url = "file://${projectDir}/../android/maven"
+        }
     }
+}
 }
